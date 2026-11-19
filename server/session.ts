@@ -701,10 +701,10 @@ export class Session {
     const step = this.step;
     if (step.type === "quiz") {
       const revealed = this.quiz?.phase === "revealed";
-      const { correct, explain, notes, ...rest } = step;
+      const { correct, explain, speaker, ...rest } = step;
       return (revealed ? { ...rest, correct, explain } : rest) as PublicStep;
     }
-    const { notes, ...rest } = step as Step & { notes?: string };
+    const { speaker, ...rest } = step; // TA notes never reach students
     return rest as PublicStep;
   }
 

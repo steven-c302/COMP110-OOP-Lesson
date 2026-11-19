@@ -1,13 +1,13 @@
 // The whole lesson, in order. Edit this file to change slides, questions, or timing.
 // It lives on the server so quiz answers never reach students' browsers early.
 import type { Step } from "../shared/types.ts";
+import { SPEAKER_NOTES } from "./speaker-notes.ts";
 
-export const LESSON: Step[] = [
+const STEPS: Step[] = [
   {
     id: "lobby",
     type: "lobby",
     minutes: 2,
-    notes: "Students join at the URL on screen. Pyodide (Python) preloads on their laptops while they wait. Start when most names are in; late joiners are fine.",
   },
   {
     id: "title",
@@ -17,7 +17,6 @@ export const LESSON: Step[] = [
     kicker: "Live session · The Four Pillars of OOP",
     title: "OOP ARENA",
     subtitle: "Last time you built classes. Today you build a fighter that has to survive the arena, and every pillar is a rule that keeps it alive.",
-    notes: "Hype it up: by the end, every student's own Python class will fight on this screen.",
   },
   {
     id: "hook",
@@ -38,7 +37,6 @@ print("You win!")`,
       "In our tournament, everyone's code runs together",
       "We need rules the code itself can't cheat",
     ],
-    notes: "Ask: 'Has anyone ever used a cheat code?' This is the same thing. The arena will run 50 people's code; why should we trust any of it?",
   },
   {
     id: "hook-poll",
@@ -54,7 +52,6 @@ print("You win!")`,
     ],
     seconds: 20,
     readSeconds: 3,
-    notes: "No right answer. Options 1 and 2 are exactly what we'll build: encapsulation (hide it) and a referee that owns the real HP.",
   },
   {
     id: "pillars",
@@ -64,7 +61,6 @@ print("You win!")`,
     kicker: "Today's map",
     title: "The Four Pillars",
     subtitle: "Each one solves a real problem for the arena.",
-    notes: "Point at each card. We'll unlock them one by one; the bar at the top of the screen tracks progress.",
   },
 
   // ------------------------------------------------------------ ENCAPSULATION
@@ -102,7 +98,6 @@ print("You win!")`,
       "@property: read it like an attribute; no setter means read-only",
       "take_damage() is the front door, and it enforces the rules",
     ],
-    notes: "Python doesn't truly enforce privacy; _ is a promise between programmers. The @property is what actually blocks knight.hp = 9999.",
   },
   {
     id: "enc-q1",
@@ -120,7 +115,6 @@ print(k.hp)`,
     correct: 0,
     explain: "-50 is ignored by the amount > 0 check, and max(0, ...) stops hp from going negative. 100 → 70 → 70 → 0.",
     seconds: 30,
-    notes: "Common wrong answer: 20 (forgot the guard on negative damage). If <70% right, hit Discuss & revote.",
   },
   {
     id: "enc-q2",
@@ -149,7 +143,6 @@ k.hp = 9999`,
       "@property\ndef hp(self):\n    return self._hp\n\ntake_damage: if amount > 0: self._hp = max(0, self._hp - amount)",
     ],
     seconds: 240,
-    notes: "Watch the per-test bars on the host screen. If many fail 'read-only', show the @property slide again.",
   },
 
   // ------------------------------------------------------------ ABSTRACTION
@@ -185,7 +178,6 @@ class Fighter(ABC):
       "@abstractmethod: every subclass MUST implement it",
       "The arena calls choose_move() without caring how it works inside",
     ],
-    notes: "Analogy: a car's steering wheel. You don't need to know how the steering rack works to drive.",
   },
   {
     id: "abs-q1",
@@ -216,7 +208,6 @@ class Fighter(ABC):
     correct: 1,
     explain: "The check happens at instantiation: Rogue() raises TypeError. Defining the class is fine; building one isn't.",
     seconds: 25,
-    notes: "This one splits classes well. Great revote candidate.",
   },
   {
     id: "abs-task",
@@ -290,7 +281,6 @@ class Fighter(ABC):
       "self.heal(): +20% max HP, only 3 potions per battle",
       "Budget: hp//10 + power + defense + speed ≤ 40 · speed = first move + dodge chance",
     ],
-    notes: "Tell them the referee keeps the real HP and re-checks stats. Setting self._power = 99 gets caught: encapsulation again.",
   },
   {
     id: "inh-q1",
@@ -339,7 +329,6 @@ print(Tank("Rocky").hp)`,
     correct: 1,
     explain: "Tank's __init__ replaces the parent's and never calls super().__init__(name), so _hp is never set.",
     seconds: 30,
-    notes: "This is the #1 bug they'll hit in the next task. Say it out loud: 'override __init__, call super()'.",
   },
   {
     id: "inh-task",
@@ -354,7 +343,6 @@ print(Tank("Rocky").hp)`,
       "if self.hp_percent < 30 and self.potions > 0:\n    return self.heal()\nreturn self.strike()",
     ],
     seconds: 300,
-    notes: "Encourage the Practice battle button. Kids love seeing their fighter beat the house bots.",
   },
   {
     id: "lb-2",
@@ -453,7 +441,6 @@ arena_turn(Duck())`,
       "def battle_cry(self):\n    return \"You can't patch this bug!\"",
     ],
     seconds: 180,
-    notes: "Anyone who doesn't submit gets a default Rookie fighter, so nobody sits out.",
   },
   {
     id: "tourney-rules",
@@ -473,7 +460,6 @@ arena_turn(Duck())`,
     id: "tournament",
     type: "tournament",
     minutes: 7,
-    notes: "Click Start tournament on the host. Early rounds fast-forward; semis and the final play out fully. Students can cheer from their laptops.",
   },
   {
     id: "exit-1",
@@ -512,6 +498,8 @@ arena_turn(Duck())`,
     id: "podium",
     type: "podium",
     minutes: 1.5,
-    notes: "Podium reveals 3rd, 2nd, 1st. Then shout out the tournament champion separately.",
   },
 ];
+
+// Attach the TA speaker notes (server/speaker-notes.ts) to each step.
+export const LESSON: Step[] = STEPS.map((s) => ({ ...s, speaker: SPEAKER_NOTES[s.id] }));

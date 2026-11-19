@@ -6,6 +6,7 @@ import { PinGate } from "../components/PinGate.tsx";
 import { ScreenView } from "../components/screen/ScreenView.tsx";
 import { Loading } from "./Screen.tsx";
 import { LETTERS } from "../components/Shapes.tsx";
+import { NotesDocument, SpeakerNotesPanel } from "../components/SpeakerNotes.tsx";
 import { setConfettiEnabled } from "../lib/confetti.ts";
 import "../styles/host.css";
 
@@ -46,7 +47,8 @@ function stepMinutes(s: Step): number {
 
 export default function Host() {
   const { view, status, setPin, emit, now } = useAdmin();
-  useTick(250);
+  const printNotes = useMemo(() => new URLSearchParams(location.search).get("notes") === "print", []);
+  useTick(printNotes ? 60_000 : 250);
 
   useEffect(() => {
     setConfettiEnabled(false);
@@ -55,18 +57,19 @@ export default function Host() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!view || (e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (!view || printNotes || (e.target as HTMLElement)?.tagName === "INPUT") return;
       if (e.key === "ArrowRight" || e.key === "PageDown") emit("goto", view.stepIndex + 1);
       if (e.key === "ArrowLeft" || e.key === "PageUp") emit("goto", view.stepIndex - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, emit]);
+  }, [view, emit, printNotes]);
 
   if (status === "need_pin" || status === "bad_pin") {
     return <PinGate role="Host controls" onPin={setPin} error={status === "bad_pin" ? "Wrong PIN" : undefined} />;
   }
   if (!view) return <Loading />;
+  if (printNotes) return <NotesDocument steps={view.steps} titleOf={stepTitle} minutesOf={stepMinutes} />;
   const step = view.steps[view.stepIndex];
 
   return (
@@ -93,11 +96,7 @@ export default function Host() {
             </button>
           </div>
           <StepControls view={view} emit={emit} now={now()} />
-          {step.notes && (
-            <div className="card host-notes">
-              <b>🗒 Notes:</b> {step.notes}
-            </div>
-          )}
+          <SpeakerNotesPanel step={step} nextTitle={view.steps[view.stepIndex + 1] ? stepTitle(view.steps[view.stepIndex + 1]) : undefined} />
         </main>
         <Players view={view} emit={emit} />
       </div>

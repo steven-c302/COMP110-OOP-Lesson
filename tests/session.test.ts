@@ -33,8 +33,8 @@ function fakeClock() {
 }
 
 const STEPS: Step[] = [
-  { id: "lobby", type: "lobby" },
-  { id: "q1", type: "quiz", kind: "choice", prompt: "?", choices: ["a", "b", "c", "d"], correct: 1, seconds: 20, readSeconds: 4 },
+  { id: "lobby", type: "lobby", speaker: { say: ["secret TA note"] } },
+  { id: "q1", type: "quiz", kind: "choice", prompt: "?", choices: ["a", "b", "c", "d"], correct: 1, seconds: 20, readSeconds: 4, speaker: { answer: "B" } },
   { id: "q2", type: "quiz", kind: "choice", prompt: "?", choices: ["a", "b"], correct: 0, seconds: 20, readSeconds: 4 },
   { id: "lb", type: "leaderboard" },
   { id: "task", type: "code", pillar: "encapsulation", taskId: "encapsulation", title: "t", goal: "g", hints: [], seconds: 60 },
@@ -64,6 +64,20 @@ describe("names", () => {
     const { s, join } = setup();
     join("Alex");
     expect(s.join("alex").ok).toBe(false);
+  });
+});
+
+describe("speaker notes", () => {
+  it("are visible to the host but never sent to students", () => {
+    const { s, advance, join } = setup();
+    const a = join("Ana");
+    expect(s.adminView().steps[0].speaker?.say).toEqual(["secret TA note"]);
+    expect(JSON.stringify(s.studentView(a.id))).not.toContain("secret TA note");
+    s.goto(1);
+    advance(4000);
+    s.answer(a.id, "q1", 1);
+    s.quizAction("reveal");
+    expect(s.studentView(a.id)!.step).not.toHaveProperty("speaker");
   });
 });
 

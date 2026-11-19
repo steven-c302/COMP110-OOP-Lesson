@@ -4,10 +4,22 @@ export type PillarId = "encapsulation" | "abstraction" | "inheritance" | "polymo
 export type TaskId = PillarId;
 export type SpriteId = "knight" | "mage" | "rogue" | "golem" | "slime" | "dragon" | "skeleton" | "archer";
 
+/** TA-only speaker notes (host page + printable view). Never sent to students. */
+export interface SpeakerNotes {
+  say?: string[]; // talking points / what to say
+  concept?: string; // the idea in plain words, analogies, deeper explanation
+  ask?: string[]; // questions to ask the room
+  answer?: string; // quiz answer + why
+  watch?: string[]; // misconceptions and common bugs
+  doNow?: string[]; // host actions for this step
+  faq?: { q: string; a: string }[]; // likely student questions
+  next?: string; // transition to the next step
+}
+
 interface StepBase {
   id: string;
   pillar?: PillarId;
-  notes?: string; // speaker notes for the TA
+  speaker?: SpeakerNotes; // TA-only, attached from server/speaker-notes.ts
   minutes?: number; // planned time, shown on the host run-sheet
 }
 

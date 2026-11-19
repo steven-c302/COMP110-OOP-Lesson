@@ -10,6 +10,7 @@ The host page shows the same list with start times; click any row to jump there.
 - [ ] `/host` → enter your PIN → **📽 Open projector window** → move it to the projector → **Start projector**.
 - [ ] Sound check: lobby music should play. Use the host's 🔊 button to mute if the room needs it.
 - [ ] Bright room? Toggle **🌙 Dark → ☀️ Light** on the host.
+- [ ] Print the speaker notes: host page → **🖨 All notes** → Print. (The current step's notes also show on the host page during class.)
 - [ ] Optional rehearsal the night before: `npm run bots -- 30` against the deployed URL.
 
 ## The session
