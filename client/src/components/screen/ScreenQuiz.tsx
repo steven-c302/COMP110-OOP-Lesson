@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { PILLARS, type QuizState, type QuizStep } from "../../../../shared/types.ts";
 import { CodeBlock } from "../CodeBlock.tsx";
 import { Countdown } from "../Countdown.tsx";
-import { ANSWER_COLORS, ANSWER_TEXT, AnswerShape } from "../Shapes.tsx";
+import { ChoiceCard, voteShares } from "../Shapes.tsx";
 import { sfx } from "../../lib/sound.ts";
 import { codeSize, renderInlineCode } from "./ScreenBasics.tsx";
 import { burst } from "../../lib/confetti.ts";
@@ -26,7 +26,7 @@ export function ScreenQuiz({ step, quiz, now, sound }: Props) {
     const from = prevPhase.current;
     prevPhase.current = phase;
     if (phase === "open" || phase === "revote") sfx("whoosh");
-    if (phase === "closed" && (from === "open" || from === "revote")) sfx("gong");
+    if (phase === "closed" && (from === "open" || from === "revote")) sfx("gong"); // results in
     if (phase === "revealed") {
       sfx("reveal");
       setTimeout(() => {
@@ -36,10 +36,12 @@ export function ScreenQuiz({ step, quiz, now, sound }: Props) {
     }
   }, [phase, sound, step.kind]);
 
-  const counts = quiz.hadRevote ? quiz.counts2 ?? [] : quiz.counts1 ?? [];
-  const before = quiz.hadRevote ? quiz.counts1 ?? [] : null;
-  const total = Math.max(1, counts.reduce((a, b) => a + b, 0));
-  const totalBefore = before ? Math.max(1, before.reduce((a, b) => a + b, 0)) : 1;
+  const results = phase === "closed";
+  const showVotes = results || revealed;
+  // after a revote, show the revote split with the first vote as a tick mark
+  const now2 = quiz.round === 2 && quiz.counts2 ? quiz.counts2 : quiz.counts1;
+  const shares = voteShares(now2, step.choices.length);
+  const before = quiz.round === 2 && quiz.counts2 && quiz.counts1 ? voteShares(quiz.counts1, step.choices.length) : null;
   const hasCode = !!step.code;
 
   return (
@@ -90,73 +92,29 @@ export function ScreenQuiz({ step, quiz, now, sound }: Props) {
             </div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: hasCode ? "1fr" : "1fr 1fr", gap: hasCode ? 18 : 26, alignContent: "start" }}>
-            {step.choices.map((choice, i) => {
-              const isCorrect = revealed && quiz.correct === i;
-              const dim = revealed && quiz.correct !== undefined && quiz.correct !== i;
-              const pct = revealed ? Math.round((100 * (counts[i] ?? 0)) / total) : 0;
-              const pctBefore = before ? Math.round((100 * (before[i] ?? 0)) / totalBefore) : 0;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 22,
-                    padding: hasCode ? "20px 26px" : "34px 34px",
-                    minHeight: hasCode ? 110 : 150,
-                    borderRadius: 20,
-                    background: ANSWER_COLORS[i],
-                    color: ANSWER_TEXT[i],
-                    fontSize: choice.length > 34 ? 32 : 40,
-                    fontWeight: 700,
-                    opacity: dim ? 0.35 : phase === "closed" ? 0.75 : 1,
-                    boxShadow: isCorrect ? "0 0 0 6px #fff, 0 0 60px 10px rgba(255,255,255,0.6)" : "0 8px 0 rgba(0,0,0,0.35)",
-                    transform: isCorrect ? "scale(1.03)" : "none",
-                    transition: "all 0.5s 0.9s",
-                  }}
-                >
-                  {revealed && (
-                    <>
-                      {before && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            bottom: 0,
-                            height: 10,
-                            width: `${pctBefore}%`,
-                            background: "rgba(0,0,0,0.45)",
-                          }}
-                          title="First vote"
-                        />
-                      )}
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          width: `${pct}%`,
-                          background: "rgba(255,255,255,0.22)",
-                          transformOrigin: "left",
-                          animation: `grow-x 0.6s ${i * 0.12}s cubic-bezier(.2,.9,.3,1) both`,
-                        }}
-                      />
-                    </>
-                  )}
-                  <AnswerShape index={i} size={hasCode ? 40 : 52} color={ANSWER_TEXT[i]} />
-                  <span style={{ position: "relative", flex: 1 }}>{choice}</span>
-                  {revealed && (
-                    <span className="num" style={{ position: "relative", fontSize: 40, display: "flex", gap: 12, alignItems: "baseline" }}>
-                      {before && <span style={{ fontSize: 26, opacity: 0.8 }}>{pctBefore}% →</span>}
-                      {counts[i] ?? 0}
-                      {isCorrect && <span style={{ fontSize: 48 }}>✓</span>}
+          <div style={{ display: "flex", flexDirection: "column", gap: hasCode ? 16 : 22, justifyContent: "flex-start", minWidth: 0 }}>
+            {step.choices.map((choice, i) => (
+              <ChoiceCard
+                key={i}
+                index={i}
+                text={renderInlineCode(choice)}
+                accent={accent}
+                big
+                compact={hasCode || step.choices.length > 4}
+                phase={revealed && step.kind !== "poll" ? "revealed" : showVotes ? "results" : "voting"}
+                pct={showVotes ? shares.pct[i] : undefined}
+                beforePct={before ? before.pct[i] : undefined}
+                crowd={showVotes && shares.crowd[i]}
+                correct={quiz.correct === i}
+                tag={
+                  showVotes ? (
+                    <span className="muted num" style={{ fontSize: "0.7em" }}>
+                      {shares.counts[i]} {shares.counts[i] === 1 ? "vote" : "votes"}
                     </span>
-                  )}
-                </div>
-              );
-            })}
+                  ) : null
+                }
+              />
+            ))}
           </div>
         )}
       </div>
@@ -169,9 +127,16 @@ export function ScreenQuiz({ step, quiz, now, sound }: Props) {
             <span className="muted num"> / {quiz.eligible}</span>
           </div>
         )}
-        {phase === "closed" && (
-          <div className="pixel" style={{ fontSize: 48, fontWeight: 700, color: "var(--gold)" }}>
-            ⏰ Time's up! {quiz.answered} answered
+        {results && (
+          <div className="pixel anim-pop" style={{ fontSize: 46, fontWeight: 700, color: "var(--gold)", display: "flex", alignItems: "center", gap: 24 }}>
+            🗳 How the arena voted
+            <span className="muted" style={{ fontSize: 34 }}>
+              {step.kind === "poll"
+                ? ""
+                : quiz.endsAt > 0
+                  ? `· answer in ${Math.max(0, Math.ceil((quiz.endsAt - now) / 1000))}…`
+                  : "· who's right?"}
+            </span>
           </div>
         )}
         {revealed && step.explain && (
@@ -184,7 +149,7 @@ export function ScreenQuiz({ step, quiz, now, sound }: Props) {
         )}
         {revealed && before && (
           <div className="chip" style={{ fontSize: 26, padding: "10px 18px" }}>
-            dark bar = first vote
+            ▏tick = first vote
           </div>
         )}
       </div>

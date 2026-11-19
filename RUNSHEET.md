@@ -2,6 +2,8 @@
 
 The host page shows the same list with start times; click any row to jump there. **← / →** move between steps.
 
+**Every question runs itself:** voting closes when everyone has answered (or time runs out), the screen shows how the room voted, and the answer reveals 6 s later. Press **⏸ Hold** on the host during those 6 s if you want to talk through the split first.
+
 ## Before class (15 min)
 
 - [ ] Open the deployed URL ~10 min early (the free tier sleeps).
@@ -20,8 +22,8 @@ The host page shows the same list with start times; click any row to jump there.
 | 3.5′ | **Warm-up poll** (no points) | No right answer. Options 1–2 (hide it / referee) are exactly what we'll build. |
 | 4′ | **The Four Pillars** | Point at each card: "Each one solves a problem for the arena." The bar at the top tracks progress. |
 | 5′ | **Encapsulation** intro + code | `_hp` is a promise; `@property` with no setter is what actually blocks `k.hp = 9999`; `take_damage()` is the front door. |
-| 7.5′ | **Q: predict the output** | If **<70% correct** (the host shows this privately), press **🗣 Discuss & revote**. Students argue with a neighbor for 60 s, then vote again. The reveal shows before → after. |
-| 8.5′ | **Q: k.hp = 9999** | Quick one. Reveal, then move on. |
+| 7.5′ | **Q: predict the output** | When the split appears and the host shows **<70% correct**, press **🗣 Discuss & revote** before the answer reveals. Students argue with a neighbor for 60 s, then vote again. The reveal marks the first vote with a tick on each bar. |
+| 8.5′ | **Q: k.hp = 9999** | Quick one. It reveals on its own; move on. |
 | 9′ | **💻 Lock down the Knight** (4 min) | Watch the per-test bars on the host. If "read-only" is red for many students, say: "Add `@property`, then delete `self.hp = ...` in `__init__`." Hints unlock for students at 60 s and 120 s. |
 | 13′ | **Abstraction** intro + code | "A contract, not a fighter. The arena only needs `choose_move()`." Steering-wheel analogy. |
 | 15.5′ | **2 questions** | The second ("when does Python complain?") often splits the room, so it's a good revote candidate. |

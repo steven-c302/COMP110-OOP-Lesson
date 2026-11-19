@@ -76,7 +76,7 @@ Runs the server session tests (vitest) plus the Python engine, harness, and refe
 
 ## How it works
 
-- **Server:** Node + Express + Socket.IO (`server/`). The session state machine (`server/session.ts`) handles reading lock → answers → discuss → revote → reveal, scoring (accuracy first: speed bonus capped at 20%, streak bonus, revotes never scored), code results, submissions, and tournament points. Reconnecting students keep their score through a token in localStorage.
+- **Server:** Node + Express + Socket.IO (`server/`). The session state machine (`server/session.ts`) handles reading lock → answers → vote split shown to the room → automatic answer reveal 6 s later (or discuss → revote), scoring (accuracy first: speed bonus capped at 20%, streak bonus, revotes never scored), code results, submissions, and tournament points. Reconnecting students keep their score through a token in localStorage.
 - **Python:** runs in a Web Worker in each browser (`client/src/python/worker.ts`). Student code never runs on the server. Infinite loops are caught by a step limit (and a worker timeout as backup). A fighter that keeps timing out gets benched.
 - **Tournament:** computed on the projector machine in Pyodide, as a deterministic, seeded battle log, then replayed with animation. Early rounds fast-forward as a grid; the last three rounds play out fully. Anyone who didn't submit fights as a default "Rookie", so nobody sits out.
 - **Anti-cheat referee:** the arena keeps its own copy of HP, potions, and stats, re-checks the stat budget, and only passes `choose_move` a read-only `EnemyInfo`. That makes a nice encapsulation talking point.
@@ -85,4 +85,4 @@ Runs the server session tests (vitest) plus the Python engine, harness, and refe
 
 - Fonts: Pixelify Sans, Atkinson Hyperlegible, JetBrains Mono (SIL Open Font License, via Google Fonts).
 - Pixel-art fighters, music, and sound effects are original to this project. Sprites are hand-drawn 16×16 grids in `client/src/lib/sprites.ts`, and the audio is synthesized live with Web Audio in `client/src/lib/sound.ts`, so there are no asset licenses to track.
-- Design choices (reading lock, hiding the first-vote histogram before a revote, relative leaderboards on student devices, top 5 only on the projector, color and shape answer tiles, projector font minimums) follow published peer-instruction and classroom-game research.
+- Design choices (reading lock, relative leaderboards on student devices, top 5 only on the projector, lettered answer cards that don't rely on color, projector font minimums) follow published peer-instruction and classroom-game research.

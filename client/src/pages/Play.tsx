@@ -6,7 +6,7 @@ import { randomName } from "../lib/names.ts";
 import { py, usePyStatus } from "../lib/python.ts";
 import { Sprite, avatarSprite } from "../components/Sprite.tsx";
 import { CodeBlock } from "../components/CodeBlock.tsx";
-import { ANSWER_COLORS, ANSWER_TEXT, AnswerShape } from "../components/Shapes.tsx";
+import { ChoiceCard, voteShares } from "../components/Shapes.tsx";
 import { CodeTask } from "../components/student/CodeTask.tsx";
 import { CountUp } from "../components/screen/ScreenBoards.tsx";
 import { Logo, renderInlineCode } from "../components/screen/ScreenBasics.tsx";
@@ -211,6 +211,10 @@ function Quiz({ step, view, emit, now }: { step: QuizStep; view: StudentView; em
   const result = me.lastResult;
   const revealed = q.phase === "revealed";
   const correct = revealed ? (step as QuizStep).correct : undefined;
+  const results = q.phase === "closed";
+  const showVotes = results || revealed;
+  const shares = voteShares(q.round === 2 && q.counts2 ? q.counts2 : q.counts1, step.choices.length);
+  const accent = pillar?.color ?? "var(--gold)";
 
   return (
     <div className="panel quiz">
@@ -239,24 +243,26 @@ function Quiz({ step, view, emit, now }: { step: QuizStep; view: StudentView; em
           {step.choices.map((choice, i) => {
             const mine = answered === i;
             const isCorrect = correct === i;
-            const disabled = !open || answered !== null;
             return (
-              <button
+              <ChoiceCard
                 key={i}
-                className={`answer ${mine ? "mine" : ""} ${disabled && !mine ? "faded" : ""} ${isCorrect ? "correct" : ""}`}
-                style={{ background: ANSWER_COLORS[i], color: ANSWER_TEXT[i] }}
-                disabled={disabled}
+                index={i}
+                text={renderInlineCode(choice)}
+                accent={accent}
+                phase={revealed && step.kind !== "poll" ? "revealed" : showVotes ? "results" : !open || answered !== null ? "locked" : "voting"}
+                pct={showVotes ? shares.pct[i] : undefined}
+                crowd={showVotes && shares.crowd[i]}
+                correct={isCorrect}
+                mine={mine}
+                tag={mine ? <span className="answer-tag">{revealed && step.kind !== "poll" ? (isCorrect ? "✓ you" : "✗ you") : "you"}</span> : null}
+                disabled={!open || answered !== null}
                 onClick={() => {
                   setPending(i);
                   emit("answer", { stepId: step.id, choice: i }, (ok) => {
                     if (!ok) setPending(null);
                   });
                 }}
-              >
-                <AnswerShape index={i} size={26} color={ANSWER_TEXT[i]} />
-                <span>{choice}</span>
-                {mine && <span className="answer-tag">{revealed ? (isCorrect ? "✓ you" : "✗ you") : "✓ locked"}</span>}
-              </button>
+              />
             );
           })}
         </div>
@@ -267,7 +273,12 @@ function Quiz({ step, view, emit, now }: { step: QuizStep; view: StudentView; em
           Locked in! Waiting for others ({q.answered}/{q.eligible})
         </div>
       )}
-      {q.phase === "closed" && <div className="quiz-wait">⏰ Time's up! Eyes on the screen for the answer…</div>}
+      {results && (
+        <div className="quiz-wait">
+          🗳 That's how the class voted.{" "}
+          {step.kind === "poll" ? "" : q.endsAt > 0 ? `Answer in ${Math.max(0, Math.ceil((q.endsAt - now) / 1000))}s…` : "Answer coming up…"}
+        </div>
+      )}
 
       {revealed && step.kind !== "poll" && (
         <div className={`result ${result?.correct ? "good" : "bad"} anim-pop`}>

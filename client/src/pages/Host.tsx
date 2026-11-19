@@ -5,7 +5,7 @@ import { useAdmin, useTick } from "../lib/socket.ts";
 import { PinGate } from "../components/PinGate.tsx";
 import { ScreenView } from "../components/screen/ScreenView.tsx";
 import { Loading } from "./Screen.tsx";
-import { ANSWER_COLORS, AnswerShape } from "../components/Shapes.tsx";
+import { LETTERS } from "../components/Shapes.tsx";
 import { setConfettiEnabled } from "../lib/confetti.ts";
 import "../styles/host.css";
 
@@ -298,12 +298,12 @@ function QuizControls({ step, view, emit, now }: { step: QuizStep; view: AdminVi
           const n = counts[i] ?? 0;
           return (
             <div key={i} className="dist-row">
-              <AnswerShape index={i} size={18} color={ANSWER_COLORS[i]} />
+              <b style={{ width: 18, color: step.correct === i ? "var(--hp)" : "var(--muted)" }}>{LETTERS[i]}</b>
               <span className="dist-label">
                 {c} {step.correct === i && <b style={{ color: "var(--hp)" }}>✓</b>}
               </span>
               <div className="test-bar">
-                <div style={{ width: `${total ? (100 * n) / total : 0}%`, background: ANSWER_COLORS[i] }} />
+                <div style={{ width: `${total ? (100 * n) / total : 0}%`, background: step.correct === i ? "var(--hp)" : "var(--cyan)" }} />
               </div>
               <span className="mono" style={{ width: 40, textAlign: "right" }}>{n}</span>
             </div>
@@ -311,7 +311,8 @@ function QuizControls({ step, view, emit, now }: { step: QuizStep; view: AdminVi
         })}
       </div>
       <div className="muted" style={{ fontSize: 13, margin: "6px 0" }}>
-        Only you see these bars. The projector hides the first vote until the reveal (so it doesn't bias the revote).
+        Live bars are host-only while voting. When voting ends (time's up or everyone answered), the room sees the split, then the
+        answer reveals automatically after 6 s. Hold to talk it through, or Discuss &amp; revote.
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {q.phase === "reading" && <button className="btn" onClick={() => emit("quiz", "close")}>Open answers now</button>}
@@ -320,6 +321,11 @@ function QuizControls({ step, view, emit, now }: { step: QuizStep; view: AdminVi
             <button className="btn" onClick={() => emit("quiz", "extend")}>+10 s</button>
             <button className="btn" onClick={() => emit("quiz", "close")}>End now</button>
           </>
+        )}
+        {q.phase === "closed" && q.endsAt > 0 && (
+          <button className="btn" onClick={() => emit("quiz", "hold")}>
+            ⏸ Hold (auto-reveal in {left}s)
+          </button>
         )}
         {q.phase === "closed" && q.round === 1 && step.kind !== "poll" && (
           <button className={`btn ${suggestRevote ? "btn-gold" : ""}`} onClick={() => emit("quiz", "discuss")}>

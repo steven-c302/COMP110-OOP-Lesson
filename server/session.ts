@@ -23,6 +23,9 @@ import type {
 import { SCORING } from "../shared/types.ts";
 import { defaultFighterCode } from "./defaults.ts";
 
+/** How long the room sees the vote split before the answer auto-reveals. */
+export const RESULTS_HOLD_MS = 6000;
+
 export interface Clock {
   now(): number;
   setTimeout(fn: () => void, ms: number): unknown;
@@ -269,11 +272,14 @@ export class Session {
     this.changed();
   }
 
+  /** Voting ends (timer or everyone answered): show everyone how the room voted,
+   *  then reveal the answer automatically after a short beat (host can hold/discuss). */
   private closeRound() {
     if (!this.quiz || (this.quiz.phase !== "open" && this.quiz.phase !== "revote")) return;
     this.clearTimer();
     this.quiz.phase = "closed";
-    this.quiz.endsAt = 0;
+    this.quiz.endsAt = this.clock.now() + RESULTS_HOLD_MS;
+    this.schedule(RESULTS_HOLD_MS, () => this.quizAction("reveal"));
     this.changed();
   }
 
@@ -309,7 +315,7 @@ export class Session {
     if (waiting.length === 0 && this.eligible().length > 0) this.closeRound();
   }
 
-  quizAction(action: "close" | "extend" | "discuss" | "revote" | "reveal") {
+  quizAction(action: "close" | "extend" | "hold" | "discuss" | "revote" | "reveal") {
     const step = this.currentQuizStep();
     const q = this.quiz;
     if (!step || !q) return;
@@ -328,8 +334,15 @@ export class Session {
           this.schedule(q.endsAt - now, () => (q.phase === "discuss" ? this.startRevote() : this.closeRound()));
         }
         break;
+      case "hold":
+        if (q.phase === "closed") {
+          this.clearTimer();
+          q.endsAt = 0;
+        }
+        break;
       case "discuss":
         if (q.phase === "closed" && q.round === 1 && step.kind !== "poll") {
+          this.clearTimer();
           q.phase = "discuss";
           q.hadRevote = true;
           q.endsAt = now + 60_000;
@@ -408,7 +421,10 @@ export class Session {
     const q = this.quiz;
     if (!step || !q) return null;
     const revealed = q.phase === "revealed";
-    const showCounts = forAdmin || revealed;
+    // Vote counts go to everyone once voting closes (results first, answer second).
+    // During a revote the first-round split stays visible, but the live revote split doesn't.
+    const show1 = forAdmin || revealed || q.phase === "closed" || q.hadRevote;
+    const show2 = q.hadRevote && (forAdmin || revealed || (q.phase === "closed" && q.round === 2));
     return {
       stepId: q.stepId,
       phase: q.phase,
@@ -418,8 +434,8 @@ export class Session {
       endsAt: q.endsAt,
       answered: this.answeredCount(),
       eligible: this.eligible().length,
-      counts1: showCounts ? this.counts(step.id, "r1", step.choices.length) : undefined,
-      counts2: showCounts && q.hadRevote ? this.counts(step.id, "r2", step.choices.length) : undefined,
+      counts1: show1 ? this.counts(step.id, "r1", step.choices.length) : undefined,
+      counts2: show2 ? this.counts(step.id, "r2", step.choices.length) : undefined,
       correct: forAdmin || revealed ? step.correct : undefined,
     };
   }
@@ -797,7 +813,8 @@ export class Session {
     if (this.step.type === "quiz") {
       this.quiz = s.quiz && s.quiz.stepId === this.step.id ? { ...s.quiz } : null;
       if (!this.quiz) this.enterStep();
-      else if (["reading", "open", "revote", "discuss"].includes(this.quiz.phase)) {
+      else if (["reading", "open", "revote", "discuss", "closed"].includes(this.quiz.phase)) {
+        // after a restart the auto-reveal timer is gone: park on results until the host reveals
         this.quiz.phase = "closed";
         this.quiz.endsAt = 0;
       }

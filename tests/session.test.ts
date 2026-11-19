@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Session, cleanName, type Clock } from "../server/session.ts";
+import { RESULTS_HOLD_MS, Session, cleanName, type Clock } from "../server/session.ts";
 import type { Step } from "../shared/types.ts";
 
 function fakeClock() {
@@ -81,25 +81,45 @@ describe("quiz flow", () => {
     expect(s.answer(a.id, "q1", 2)).toBe(false); // one answer per round
     advance(10_000);
     s.answer(b.id, "q1", 0);
-    advance(20_000);
+    advance(10_000); // timer runs out (Cat never answers)
     expect(s.quiz?.phase).toBe("closed");
     s.quizAction("reveal");
     expect(a.score).toBe(1200); // instant answer: 1000 + full 200 speed bonus
     expect(b.score).toBe(0);
   });
 
-  it("closes early once every connected player has answered", () => {
+  it("closes once everyone answered, shows the split to students, then auto-reveals", () => {
     const { s, advance, join } = setup();
     const a = join("Ana");
     const b = join("Ben");
     s.goto(1);
     advance(4000);
     s.answer(a.id, "q1", 1);
-    s.answer(b.id, "q1", 1);
+    expect(s.studentView(a.id)!.quiz!.counts1).toBeUndefined(); // no peeking while voting
+    s.answer(b.id, "q1", 2);
+    expect(s.quiz?.phase).toBe("closed");
+    const results = s.studentView(a.id)!;
+    expect(results.quiz!.counts1).toEqual([0, 1, 1, 0]); // results first...
+    expect(results.quiz!.correct).toBeUndefined(); // ...answer second
+    expect(results.step).not.toHaveProperty("correct");
+    advance(RESULTS_HOLD_MS);
+    expect(s.quiz?.phase).toBe("revealed");
+    expect(s.studentView(a.id)!.quiz!.correct).toBe(1);
+    expect(a.score).toBeGreaterThan(0);
+  });
+
+  it("host can hold the results screen", () => {
+    const { s, advance, join } = setup();
+    const a = join("Ana");
+    s.goto(1);
+    advance(4000);
+    s.answer(a.id, "q1", 1);
+    s.quizAction("hold");
+    advance(60_000);
     expect(s.quiz?.phase).toBe("closed");
   });
 
-  it("never scores the revote, and hides counts from students until reveal", () => {
+  it("never scores the revote, and hides the live revote split until it closes", () => {
     const { s, advance, join } = setup();
     const a = join("Ana");
     const b = join("Ben");
@@ -109,12 +129,13 @@ describe("quiz flow", () => {
     s.answer(b.id, "q1", 0);
     s.quizAction("discuss");
     expect(s.quiz?.phase).toBe("discuss");
-    expect(s.studentView(a.id)!.quiz!.counts1).toBeUndefined();
     expect(s.studentView(a.id)!.step).not.toHaveProperty("correct");
     advance(60_000);
     expect(s.quiz?.phase).toBe("revote");
     s.answer(a.id, "q1", 1);
+    expect(s.studentView(a.id)!.quiz!.counts2).toBeUndefined();
     s.answer(b.id, "q1", 1);
+    expect(s.studentView(a.id)!.quiz!.counts2).toEqual([0, 2, 0, 0]);
     s.quizAction("reveal");
     expect(a.score).toBe(0);
     const view = s.studentView(a.id)!;
