@@ -1,0 +1,14 @@
+# Render Blueprint: New > Blueprint > pick this repo. Set HOST_PIN when prompted.
+services:
+  - type: web
+    name: oop-arena
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HOST_PIN
+        sync: false
