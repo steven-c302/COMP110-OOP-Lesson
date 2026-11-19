@@ -408,3 +408,53 @@
 .practice-row.lost {
   border-left: 4px solid var(--dmg);
 }
+
+/* solution walkthrough */
+.walk-points {
+  list-style: none;
+  counter-reset: pt;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.walk-points li {
+  counter-increment: pt;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 10px 46px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 2px solid transparent;
+  transition: opacity 0.3s, border-color 0.3s;
+}
+.walk-points li::before {
+  content: counter(pt);
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--bg-deep);
+  background: var(--acc);
+}
+.walk-points li span {
+  color: var(--muted);
+}
+.walk-points li.active {
+  border-color: var(--acc);
+}
+.walk-points li.active span {
+  color: var(--text);
+}
+.walk-points li.dim {
+  opacity: 0.45;
+}

@@ -2,6 +2,8 @@
 
 The host page shows the same list with start times; click any row to jump there. **← / →** move between steps.
 
+**Solution walkthroughs** follow each coding challenge. On those slides, **→** highlights the numbered points one at a time (projector and student laptops follow along), and the next **→** after the last point moves on.
+
 **Every question runs itself:** voting closes when everyone has answered (or time runs out), the screen shows how the room voted, and the answer reveals 6 s later. Press **⏸ Hold** on the host during those 6 s if you want to talk through the split first.
 
 ## Before class (15 min)
@@ -19,6 +21,7 @@ The host page shows the same list with start times; click any row to jump there.
 |---|---|---|
 | 0′ | **Lobby** | "Open the link or scan the QR code. Pick a name; the dice gives you a random one." Python preloads while they wait. Start when most names are in; late joiners are fine. |
 | 2′ | **Title** | "Last time you built classes. Today, YOUR class fights in a tournament on this screen." |
+| 2.5′ | **The scenario** | The story and the four missions (one per pillar), then the tournament. Point at each card and the scoring chips. |
 | 2.5′ | **Hook: one line to beat the boss** | "Ever used a cheat code? Our arena runs 50 people's code. Why should we trust any of it?" |
 | 3.5′ | **Warm-up poll** (no points) | No right answer. Options 1–2 (hide it / referee) are exactly what we'll build. |
 | 4′ | **The Four Pillars** | Point at each card: "Each one solves a problem for the arena." The bar at the top tracks progress. |

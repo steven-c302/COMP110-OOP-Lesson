@@ -109,6 +109,7 @@ io.on("connection", (socket) => {
     if (session.tournament.result) socket.emit("tournament:data", session.tournament.result);
 
     socket.on("goto", (index: number) => session.goto(Number(index)));
+    socket.on("focus", (n: number) => session.setFocus(Number(n)));
     socket.on("quiz", (action) => session.quizAction(action));
     socket.on("lock", (locked: boolean) => session.setLocked(!!locked));
     socket.on("settings", (patch) => session.updateSettings(patch ?? {}));

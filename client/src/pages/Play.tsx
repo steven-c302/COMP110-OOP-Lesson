@@ -147,7 +147,7 @@ function Game({ view, emit, now, offline }: { view: StudentView; emit: ReturnTyp
       {offline && <div className="play-offline">Reconnecting… your score is safe.</div>}
       <main className={`play-main ${wide ? "wide" : ""}`}>
         {step.type === "lobby" && <Lobby view={view} />}
-        {step.type === "slide" && <EyesUp view={view} />}
+        {step.type === "slide" && (step.layout === "walkthrough" && step.code ? <Walkthrough key={step.id} view={view} /> : <EyesUp view={view} />)}
         {step.type === "quiz" && view.quiz && <Quiz key={step.id} step={step} view={view} emit={emit} now={now} />}
         {step.type === "code" && <CodeTask key={step.id} step={step} view={view} emit={emit} />}
         {step.type === "leaderboard" && <MyRank view={view} />}
@@ -168,6 +168,32 @@ function Lobby({ view }: { view: StudentView }) {
       <div className={`chip ${pyStatus === "ready" ? "ok" : ""}`} style={{ fontSize: 15 }}>
         {pyStatus === "ready" ? "🐍 Python is ready for the coding challenges" : "🐍 Loading Python for the coding challenges…"}
       </div>
+    </div>
+  );
+}
+
+/** Solution walkthrough on the laptop: the code plus the point the TA is on, in sync with the projector. */
+function Walkthrough({ view }: { view: StudentView }) {
+  const step = view.step;
+  if (step.type !== "slide" || !step.code) return null;
+  const callouts = step.callouts ?? [];
+  const accent = step.pillar ? PILLARS[step.pillar].color : "var(--gold)";
+  const marks = callouts.map((c, i) => ({ lines: c.lines, label: String(i + 1), active: view.focus === i + 1 }));
+  return (
+    <div className="panel walk">
+      <div className="muted" style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.08em", color: accent }}>
+        {step.kicker ?? "Walkthrough"}
+      </div>
+      <h2 className="pixel" style={{ margin: "2px 0 10px" }}>{step.title}</h2>
+      <CodeBlock code={step.code} size={15} marks={marks} accent={accent} style={{ textAlign: "left", maxWidth: "100%" }} />
+      <ol className="walk-points">
+        {callouts.map((c, i) => (
+          <li key={i} className={view.focus === i + 1 ? "active" : view.focus > 0 ? "dim" : ""} style={{ ["--acc" as string]: accent }}>
+            <b>{renderInlineCode(c.title)}</b>
+            <span>{renderInlineCode(c.text)}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

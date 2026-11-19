@@ -147,7 +147,7 @@ export function Logo({ size = 96 }: { size?: number }) {
 }
 
 // ------------------------------------------------------------ slides
-export function ScreenSlide({ step }: { step: SlideStep }) {
+export function ScreenSlide({ step, focus = 0 }: { step: SlideStep; focus?: number }) {
   const pillar = step.pillar ? PILLARS[step.pillar] : null;
   const accent = pillar?.color ?? "var(--gold)";
 
@@ -259,6 +259,14 @@ export function ScreenSlide({ step }: { step: SlideStep }) {
     );
   }
 
+  if (step.layout === "scenario") {
+    return <ScenarioSlide step={step} />;
+  }
+
+  if (step.layout === "walkthrough" && step.code) {
+    return <WalkthroughSlide step={step} focus={focus} accent={accent} />;
+  }
+
   if (step.layout === "split" && step.code) {
     return (
       <div style={{ position: "absolute", inset: 0, padding: "140px 80px 70px", display: "grid", gridTemplateColumns: "640px 1fr", gap: 60 }}>
@@ -280,6 +288,158 @@ export function ScreenSlide({ step }: { step: SlideStep }) {
       {step.subtitle && <div style={{ fontSize: 42, color: "var(--muted)" }}>{step.subtitle}</div>}
       {step.code && <CodeBlock code={step.code} size={codeSize(step.code, 1680)} />}
       <Bullets items={step.bullets ?? []} accent={accent} size={44} />
+    </div>
+  );
+}
+
+const MISSION_SPRITES = ["knight", "slime", "mage", "dragon"] as const;
+
+/** Opening scenario: the story, the four missions (one per pillar), and how scoring works. */
+function ScenarioSlide({ step }: { step: SlideStep }) {
+  const missions = step.bullets ?? [];
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: "120px 100px 50px", display: "flex", flexDirection: "column", gap: 30 }}>
+      <div className="arena-floor" />
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 60, alignItems: "end" }}>
+        <div>
+          <Heading kicker={step.kicker} title={step.title} accent="var(--gold)" />
+          {step.subtitle && <div style={{ fontSize: 36, lineHeight: 1.4, marginTop: 20, maxWidth: 1250 }}>{renderInlineCode(step.subtitle)}</div>}
+        </div>
+        <div className="anim-bob" style={{ display: "flex", gap: 14, alignItems: "flex-end" }}>
+          <Sprite sprite="golem" size={130} />
+          <div className="pixel" style={{ fontSize: 60, color: "var(--dmg)", paddingBottom: 40 }}>VS</div>
+          <Sprite sprite="rogue" size={130} />
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${missions.length + 1}, minmax(0, 1fr))`, gap: 22, flex: 1, minHeight: 0 }}>
+        {missions.map((m, i) => {
+          const id = PILLAR_ORDER[i];
+          const p = id ? PILLARS[id] : null;
+          const color = p?.color ?? "var(--gold)";
+          const [title, ...rest] = m.split(":");
+          return (
+            <div
+              key={i}
+              className="card anim-pop"
+              style={{
+                animationDelay: `${0.15 + i * 0.15}s`,
+                padding: "22px 22px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                borderColor: color,
+                background: `linear-gradient(180deg, ${color}22, var(--panel) 55%)`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <span className="num" style={{ fontSize: 34, width: 56, height: 56, borderRadius: 14, display: "grid", placeItems: "center", background: color, color: "var(--bg-deep)" }}>
+                  {i + 1}
+                </span>
+                {p && (
+                  <span className="pixel" style={{ fontSize: 22, color, whiteSpace: "nowrap" }}>
+                    {p.glyph} {p.name}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 32, fontWeight: 700, lineHeight: 1.2 }}>{renderInlineCode(title)}</div>
+              {rest.length > 0 && <div style={{ fontSize: 26, lineHeight: 1.35, color: "var(--muted)" }}>{renderInlineCode(rest.join(":").trim())}</div>}
+              <div style={{ flex: 1 }} />
+              <Sprite sprite={MISSION_SPRITES[i % MISSION_SPRITES.length]} size={72} />
+            </div>
+          );
+        })}
+        <div
+          className="card anim-pop"
+          style={{
+            animationDelay: `${0.15 + missions.length * 0.15}s`,
+            padding: "22px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            borderColor: "var(--gold)",
+            background: "linear-gradient(180deg, rgba(255,204,77,0.2), var(--panel) 55%)",
+            boxShadow: "0 0 60px rgba(255,204,77,0.25)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ fontSize: 46 }}>🏆</span>
+            <span className="pixel" style={{ fontSize: 26, color: "var(--gold)" }}>Finale</span>
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 700, lineHeight: 1.2 }}>The Tournament</div>
+          <div style={{ fontSize: 26, lineHeight: 1.35, color: "var(--muted)" }}>Every fighter you built battles live on this screen.</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ fontSize: 64, lineHeight: 1 }}>⚔️</div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 16, flex: "none", justifyContent: "center", fontSize: 26 }}>
+        {[
+          ["❓", "Quizzes", "1000 + speed bonus"],
+          ["💻", "Code challenges", "up to 1500"],
+          ["⚔️", "Tournament", "500 per win"],
+          ["👑", "Champion", "+1500"],
+        ].map(([icon, label, pts]) => (
+          <div key={label} className="chip" style={{ fontSize: 26, padding: "8px 20px", whiteSpace: "nowrap" }}>
+            {icon} {label} · <span className="num" style={{ color: "var(--gold)" }}>{pts}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Solution walkthrough: code on the right, numbered points on the left. The host steps through them. */
+function WalkthroughSlide({ step, focus, accent }: { step: SlideStep; focus: number; accent: string }) {
+  const callouts = step.callouts ?? [];
+  const code = step.code!;
+  const marks = callouts.map((c, i) => ({ lines: c.lines, label: String(i + 1), active: focus === i + 1 }));
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: "120px 70px 50px", display: "grid", gridTemplateColumns: "minmax(0, 0.85fr) minmax(0, 1.15fr)", gap: 44 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 22, minHeight: 0 }}>
+        <div>
+          <div className="pixel" style={{ fontSize: 30, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>
+            {step.kicker}
+          </div>
+          <div className="pixel" style={{ fontSize: 64, fontWeight: 700, lineHeight: 1 }}>
+            {step.title}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
+          {callouts.map((c, i) => {
+            const active = focus === i + 1;
+            const dim = focus > 0 && !active;
+            return (
+              <div
+                key={i}
+                className="card"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto minmax(0, 1fr)",
+                  gap: "6px 18px",
+                  padding: active ? "18px 22px" : "12px 20px",
+                  borderColor: active ? accent : "var(--line)",
+                  background: active ? `color-mix(in srgb, ${accent} 14%, var(--panel))` : "var(--panel)",
+                  opacity: dim ? 0.42 : 1,
+                  transition: "all 0.35s",
+                }}
+              >
+                <span
+                  className="num"
+                  style={{ gridRow: "span 2", width: 50, height: 50, borderRadius: 25, display: "grid", placeItems: "center", fontSize: 28, background: accent, color: "var(--bg-deep)" }}
+                >
+                  {i + 1}
+                </span>
+                <div style={{ fontSize: 32, fontWeight: 700, lineHeight: 1.25 }}>{renderInlineCode(c.title)}</div>
+                {(active || focus === 0) && (
+                  <div style={{ fontSize: active ? 29 : 24, lineHeight: 1.4, color: active ? "var(--text)" : "var(--muted)" }}>{renderInlineCode(c.text)}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", minWidth: 0, minHeight: 0 }}>
+        <CodeBlock code={code} size={codeSize(code, 900, 18, 820)} style={{ width: "100%", maxHeight: "100%" }} marks={marks} accent={accent} />
+      </div>
     </div>
   );
 }

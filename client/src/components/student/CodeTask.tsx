@@ -9,6 +9,7 @@ import { TASKS, checklist } from "../../lib/tasks.ts";
 import { describeFighter, practice, runTask, usePyStatus, type TaskRun } from "../../lib/python.ts";
 import { Sprite } from "../Sprite.tsx";
 import { renderInlineCode } from "../screen/ScreenBasics.tsx";
+import { pythonEditorExtensions } from "../../lib/editor.ts";
 
 // Keyed by player too, so a new player in the same browser (rehearsal, shared lab machine,
 // host Reset) never inherits someone else's finished code.
@@ -155,6 +156,8 @@ export function CodeTask({ step, view, emit }: Props) {
     [doRun],
   );
 
+  const editorExtensions = useMemo(() => [python(), ...pythonEditorExtensions(), runKeymap], [runKeymap]);
+
   const secondsOpen = Math.floor((nowTick - openedAt) / 1000);
   const hintUnlocks = [60, 120];
   const errorLine = run?.error?.line ?? null;
@@ -212,8 +215,8 @@ export function CodeTask({ step, view, emit }: Props) {
             onChange={setCode}
             theme="dark"
             height="100%"
-            extensions={[python(), runKeymap]}
-            basicSetup={{ highlightActiveLine: true, foldGutter: false, autocompletion: true }}
+            extensions={editorExtensions}
+            basicSetup={{ highlightActiveLine: true, foldGutter: false, autocompletion: true, tabSize: 4, indentOnInput: true }}
             style={{ height: "100%", fontSize: 15 }}
           />
         </div>

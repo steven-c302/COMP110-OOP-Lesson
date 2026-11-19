@@ -21,6 +21,20 @@ export const SPEAKER_NOTES: Record<string, SpeakerNotes> = {
       "“Last time you built classes: attributes and methods. Today you'll build a fighter class, and at the end, everyone's code fights in a live tournament on this screen.”",
       "“There are points for quizzes and coding challenges, and the tournament can still flip the leaderboard.”",
     ],
+    next: "The scenario: what we're building today.",
+  },
+  scenario: {
+    say: [
+      "“Here's the story. You've been hired to build fighters for a live coding arena, and the arena runs EVERYONE's code in one tournament.”",
+      "“That's a trust problem: 50 people's classes, one game. Today's four missions each fix one piece of it, and each mission is one OOP pillar.”",
+      "Point at the cards left to right: “Mission 1 protects HP, mission 2 sets the contract every fighter signs, mission 3 is YOUR fighter, mission 4 plugs it into the arena. Then: the tournament.”",
+      "Point at the scoring chips: “Quizzes and challenges earn points, and the tournament pays out big, so nobody's out of it until the end.”",
+    ],
+    concept: "The missions build on each other. The Knight (encapsulation) teaches protected HP; the Training Dummy (abstraction) teaches the Fighter contract; YOUR fighter (inheritance) reuses Fighter's moves; the battle cry (polymorphism) shows the arena calling methods on classes it's never seen.",
+    faq: [
+      { q: "Do I need to know anything new to start?", a: "Only last session's classes and methods. Everything else we build together, and each challenge has hints." },
+      { q: "What if my code doesn't work by the tournament?", a: "You still fight, as a default Rookie. Nobody sits out." },
+    ],
     next: "Hook: the one-line cheat.",
   },
   hook: {
@@ -100,6 +114,21 @@ export const SPEAKER_NOTES: Record<string, SpeakerNotes> = {
       "Forgetting `self._max_hp`, so heal() has nothing to cap at.",
       "Writing `return self.hp` inside the property, which calls itself forever (RecursionError). It must be `self._hp`.",
     ],
+    next: "Solution walkthrough: the locked-down Knight.",
+  },
+  "enc-solution": {
+    doNow: [
+      "Press → (or Next point ▶) to highlight each numbered point; the projector and laptops highlight the matching lines. Press → again after the last point to move on.",
+      "Students can see this code on their laptops too.",
+    ],
+    say: [
+      "Point 1: “The real values live in _hp and _max_hp. Underscore: hands off.”",
+      "Point 2: “@property is the read-only window. Reading works; writing raises AttributeError.”",
+      "Point 3: “take_damage is the front door, and it enforces two rules: no negative damage, never below zero.”",
+      "Point 4: “heal caps at max with min(...). Same idea in the other direction.”",
+    ],
+    ask: ["“Who hit the AttributeError about ‘has no setter’? What line caused it?” (it was the leftover `self.hp = max_hp`)"],
+    watch: ["If many students didn't finish, slow down on point 2: the property plus deleting `self.hp = ...` is the key move."],
     next: "Abstraction.",
   },
 
@@ -145,6 +174,17 @@ export const SPEAKER_NOTES: Record<string, SpeakerNotes> = {
       "Students writing `def choose_move(self):` without the `enemy` parameter. The arena passes one, so it must be accepted.",
       "Returning a string like \"guard\" instead of calling `self.guard()`.",
     ],
+    next: "Solution walkthrough: the Training Dummy.",
+  },
+  "abs-solution": {
+    doNow: ["Short one: four points, about a minute. → steps through them."],
+    say: [
+      "Point 1: “Fighter is a contract. It has an abstract choose_move, so Fighter() is a TypeError.”",
+      "Point 2: “Inheriting from Fighter signs the contract. You get everything except the decision.”",
+      "Point 3: “Keep the promise: write choose_move, take the enemy parameter, and RETURN a move.”",
+      "Point 4: “Nothing abstract left, so now it can be built.”",
+    ],
+    watch: ["Missing `return` is the quiet bug here: the method runs but hands back None, which the referee treats as a fumble."],
     next: "Halfway leaderboard.",
   },
   "lb-1": {
@@ -210,6 +250,22 @@ export const SPEAKER_NOTES: Record<string, SpeakerNotes> = {
       "Using `self.hp = ...` to heal. HP is read-only; they must call `self.heal()`.",
     ],
     faq: [{ q: "What's a good strategy?", a: "Don't give it away. Hint: heal when low, heavy strike against high defense or a guarding enemy, guard to charge up a big hit." }],
+    next: "Example walkthrough: one fighter that works.",
+  },
+  "inh-solution": {
+    doNow: [
+      "Say up front: “This is ONE example. Your fighter should have your own stats and strategy, so don't copy Ember!”",
+      "→ steps through the five points.",
+    ],
+    say: [
+      "Point 1: “Pyromancer IS-A Fighter, so it gets HP, potions and all the moves.”",
+      "Point 2: “super().__init__ runs Fighter's setup with our stats. Check the budget out loud: 9 + 16 + 5 + 10 = 40.”",
+      "Point 3: “Heal when low, but only if potions are left.”",
+      "Point 4: “Read the enemy: heavy strike when they're guarding or tanky.”",
+      "Point 5: “Otherwise strike. That's three moves, so the strategy check passes.”",
+    ],
+    ask: ["“Who found a strategy that beat all three house bots? What did you do differently?”"],
+    concept: "Every `self.heal()`, `self.strike()` and `self.hp_percent` used here is inherited: Pyromancer defines none of them.",
     next: "Leaderboard.",
   },
   "lb-2": {
@@ -256,6 +312,16 @@ export const SPEAKER_NOTES: Record<string, SpeakerNotes> = {
       "Lock submissions from the host when time's up (starting the tournament also locks them).",
     ],
     watch: ["battle_cry must RETURN a string (1–80 characters), not print it."],
+    next: "Solution walkthrough: one call, many fighters.",
+  },
+  "poly-solution": {
+    doNow: ["→ steps through the three points, then on to the tournament rules."],
+    say: [
+      "Point 1: “battle_cry overrides Fighter's default. It returns the string; the arena does the printing.”",
+      "Point 2: “Look at the arena loop: it never checks what class f is. It just calls f.battle_cry().”",
+      "Point 3: “Same with choose_move. One line of arena code, a whole room's worth of different strategies. That's polymorphism, and you're about to watch it.”",
+    ],
+    concept: "The arena was written before any student class existed, and it needs zero changes to run them all.",
     next: "Tournament rules.",
   },
 

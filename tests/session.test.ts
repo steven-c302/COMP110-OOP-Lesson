@@ -39,6 +39,17 @@ const STEPS: Step[] = [
   { id: "lb", type: "leaderboard" },
   { id: "task", type: "code", pillar: "encapsulation", taskId: "encapsulation", title: "t", goal: "g", hints: [], seconds: 60 },
   { id: "tour", type: "tournament" },
+  {
+    id: "walk",
+    type: "slide",
+    layout: "walkthrough",
+    title: "w",
+    code: "a\nb",
+    callouts: [
+      { lines: [1, 1], title: "one", text: "" },
+      { lines: [2, 2], title: "two", text: "" },
+    ],
+  },
 ];
 
 function setup() {
@@ -78,6 +89,25 @@ describe("speaker notes", () => {
     s.answer(a.id, "q1", 1);
     s.quizAction("reveal");
     expect(s.studentView(a.id)!.step).not.toHaveProperty("speaker");
+  });
+});
+
+describe("walkthrough focus", () => {
+  it("steps through callouts, clamps, syncs to students, and resets on slide change", () => {
+    const { s, join } = setup();
+    const a = join("Ana");
+    s.goto(6);
+    s.setFocus(1);
+    expect(s.studentView(a.id)!.focus).toBe(1);
+    s.setFocus(9);
+    expect(s.focus).toBe(2);
+    s.setFocus(-3);
+    expect(s.focus).toBe(0);
+    s.setFocus(2);
+    s.goto(5);
+    expect(s.adminView().focus).toBe(0);
+    s.setFocus(1); // no callouts on this step
+    expect(s.focus).toBe(0);
   });
 });
 

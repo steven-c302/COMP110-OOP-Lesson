@@ -139,6 +139,8 @@ export interface SessionSnapshot {
 
 export class Session {
   stepIndex = 0;
+  /** Which walkthrough callout is highlighted (0 = show all). Resets on every step change. */
+  focus = 0;
   players = new Map<string, Player>();
   quiz: QuizRuntime | null = null;
   settings: Settings = { speedBonus: true, lateJoin: true, reducedMotion: false, muted: false, theme: "dark" };
@@ -226,7 +228,17 @@ export class Session {
     if (index < 0 || index >= this.steps.length || index === this.stepIndex) return;
     this.leaveStep();
     this.stepIndex = index;
+    this.focus = 0;
     this.enterStep();
+    this.changed();
+  }
+
+  setFocus(n: number) {
+    const step = this.step;
+    const max = step.type === "slide" ? step.callouts?.length ?? 0 : 0;
+    const next = Math.max(0, Math.min(max, Math.floor(Number(n) || 0)));
+    if (next === this.focus) return;
+    this.focus = next;
     this.changed();
   }
 
@@ -621,6 +633,7 @@ export class Session {
     this.recentPasses = {};
     this.tournament = Session.freshTournament();
     this.stepIndex = 0;
+    this.focus = 0;
     this.enterStep();
     this.changed();
   }
@@ -663,6 +676,7 @@ export class Session {
       role: "admin",
       serverNow: this.clock.now(),
       stepIndex: this.stepIndex,
+      focus: this.focus,
       steps: this.steps,
       quiz: this.quizState(true),
       players,
@@ -722,6 +736,7 @@ export class Session {
       role: "student",
       serverNow: this.clock.now(),
       stepIndex: this.stepIndex,
+      focus: this.focus,
       stepCount: this.steps.length,
       step: this.publicStep(),
       quiz: this.quizState(false),

@@ -58,8 +58,17 @@ export default function Host() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!view || printNotes || (e.target as HTMLElement)?.tagName === "INPUT") return;
-      if (e.key === "ArrowRight" || e.key === "PageDown") emit("goto", view.stepIndex + 1);
-      if (e.key === "ArrowLeft" || e.key === "PageUp") emit("goto", view.stepIndex - 1);
+      // On a walkthrough slide, arrows step through its points before changing slides.
+      const cur = view.steps[view.stepIndex];
+      const points = cur.type === "slide" ? cur.callouts?.length ?? 0 : 0;
+      if (e.key === "ArrowRight" || e.key === "PageDown") {
+        if (view.focus < points) emit("focus", view.focus + 1);
+        else emit("goto", view.stepIndex + 1);
+      }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        if (view.focus > 0) emit("focus", view.focus - 1);
+        else emit("goto", view.stepIndex - 1);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -164,6 +173,34 @@ function RunSheet({ view, emit }: { view: AdminView; emit: (e: string, p?: unkno
 
 function StepControls({ view, emit, now }: { view: AdminView; emit: (e: string, p?: unknown) => void; now: number }) {
   const step = view.steps[view.stepIndex];
+  if (step.type === "slide" && step.callouts?.length) {
+    const n = step.callouts.length;
+    const cur = view.focus > 0 ? step.callouts[view.focus - 1] : null;
+    return (
+      <div className="card host-panel">
+        <div className="host-panel-head">
+          <b>🧭 Walkthrough</b>
+          <span className="chip">{view.focus === 0 ? "overview (all points)" : `point ${view.focus} of ${n}`}</span>
+          <span className="muted" style={{ fontSize: 13 }}>← → step through the points, then on to the next slide</span>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <button className="btn" disabled={view.focus === 0} onClick={() => emit("focus", view.focus - 1)}>◀ Back</button>
+          {step.callouts.map((c, i) => (
+            <button key={i} className={`btn btn-sm ${view.focus === i + 1 ? "btn-gold" : ""}`} onClick={() => emit("focus", i + 1)} title={c.title}>
+              {i + 1}
+            </button>
+          ))}
+          <button className="btn btn-gold" disabled={view.focus === n} onClick={() => emit("focus", view.focus + 1)}>Next point ▶</button>
+          <button className="btn btn-sm" onClick={() => emit("focus", 0)}>Show all</button>
+        </div>
+        {cur && (
+          <div className="muted" style={{ marginTop: 8 }}>
+            <b style={{ color: "var(--text)" }}>{cur.title}:</b> {cur.text} <span className="mono">(lines {cur.lines[0]}–{cur.lines[1]})</span>
+          </div>
+        )}
+      </div>
+    );
+  }
   if (step.type === "quiz" && view.quiz) return <QuizControls step={step} view={view} emit={emit} now={now} />;
   if (step.type === "code") {
     const c = view.code;

@@ -29,12 +29,20 @@ export interface LobbyStep extends StepBase {
 
 export interface SlideStep extends StepBase {
   type: "slide";
-  layout: "title" | "pillar" | "split" | "code" | "bullets" | "pillars";
+  layout: "title" | "pillar" | "split" | "code" | "bullets" | "pillars" | "scenario" | "walkthrough";
   kicker?: string;
   title: string;
   subtitle?: string;
   bullets?: string[];
   code?: string;
+  /** walkthrough: numbered points the host steps through; lines are 1-based, inclusive */
+  callouts?: Callout[];
+}
+
+export interface Callout {
+  lines: [number, number];
+  title: string;
+  text: string;
 }
 
 export interface QuizStep extends StepBase {
@@ -204,6 +212,7 @@ export interface AdminView {
   role: "admin";
   serverNow: number;
   stepIndex: number;
+  focus: number; // walkthrough point (0 = overview)
   steps: Step[];
   quiz: QuizState | null;
   players: PlayerRow[];
@@ -254,6 +263,7 @@ export interface StudentView {
   role: "student";
   serverNow: number;
   stepIndex: number;
+  focus: number;
   stepCount: number;
   step: PublicStep;
   quiz: QuizState | null;

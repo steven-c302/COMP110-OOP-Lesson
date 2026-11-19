@@ -25,7 +25,7 @@ export function ScreenView({ view, now, emit, sound, preview, result, cmd }: Pro
       <Stage>
         {showBar && <PillarBar steps={view.steps} index={view.stepIndex} />}
         {step.type === "lobby" && <ScreenLobby view={view} sound={sound} />}
-        {step.type === "slide" && <ScreenSlide key={step.id} step={step} />}
+        {step.type === "slide" && <ScreenSlide key={step.id} step={step} focus={view.focus ?? 0} />}
         {step.type === "quiz" && view.quiz && <ScreenQuiz key={step.id} step={step} quiz={view.quiz} now={now} sound={sound} />}
         {step.type === "code" && <ScreenCode key={step.id} step={step} view={view} now={now} sound={sound} />}
         {step.type === "leaderboard" && <ScreenLeaderboard key={step.id} step={step} view={view} sound={sound} />}

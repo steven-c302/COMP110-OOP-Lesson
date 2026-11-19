@@ -62,7 +62,7 @@ Notes:
 
 ## Editing the lesson
 
-- **Slides, questions, timings:** `server/lesson.ts`.
+- **Slides, questions, timings:** `server/lesson.ts`. Layouts include `scenario` (the opening story and missions) and `walkthrough` (code with numbered `callouts` the host steps through with → / ←).
 - **Speaker notes:** `server/speaker-notes.ts` (talking points, answers, common mistakes, likely questions). They show under the preview on `/host`, and **🖨 All notes** opens a printable version of every step (`/host?notes=print`). Students never receive them. Quiz answers stay on the server and are never sent to students before the reveal.
 - **Coding tasks:** `client/src/python/tasks/*_starter.py` (starter code) and `*_tests.py` (hidden tests; each test's docstring is the checklist text students see).
 - **Game rules and balance:** `client/src/python/arena.py` (stat budget 40; moves: strike, heavy strike at 40% to hit, guard with a +50% charge, and 3 heal potions).

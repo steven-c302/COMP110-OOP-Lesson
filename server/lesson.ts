@@ -19,6 +19,22 @@ const STEPS: Step[] = [
     subtitle: "Last time you built classes. Today you build a fighter that has to survive the arena, and every pillar is a rule that keeps it alive.",
   },
   {
+    id: "scenario",
+    type: "slide",
+    layout: "scenario",
+    minutes: 1,
+    kicker: "The scenario",
+    title: "Welcome to the Arena",
+    subtitle:
+      "You've been hired to build fighters for a live coding arena. The arena runs EVERYONE's Python code in one tournament, so your fighter has to follow the rules, and the rules have to be impossible to cheat.",
+    bullets: [
+      "Lock down the Knight: protect HP so nobody can cheat",
+      "Build a Training Dummy: sign the fighter contract",
+      "Build YOUR fighter: inherit the moves, pick stats and a strategy",
+      "Battle cry & submit: plug your class into the arena",
+    ],
+  },
+  {
     id: "hook",
     type: "slide",
     layout: "split",
@@ -79,7 +95,7 @@ print("You win!")`,
     type: "slide",
     layout: "split",
     pillar: "encapsulation",
-    minutes: 2,
+    minutes: 1.5,
     kicker: "Encapsulation",
     title: "Lock the vault",
     code: `class Knight:
@@ -135,7 +151,7 @@ k.hp = 9999`,
     type: "code",
     pillar: "encapsulation",
     taskId: "encapsulation",
-    minutes: 4,
+    minutes: 3.5,
     title: "Lock down the Knight",
     goal: "Make hp private and read-only, and make take_damage() and heal() enforce the rules.",
     hints: [
@@ -143,6 +159,38 @@ k.hp = 9999`,
       "@property\ndef hp(self):\n    return self._hp\n\ntake_damage: if amount > 0: self._hp = max(0, self._hp - amount)",
     ],
     seconds: 240,
+  },
+  {
+    id: "enc-solution",
+    type: "slide",
+    layout: "walkthrough",
+    pillar: "encapsulation",
+    minutes: 1.5,
+    kicker: "Solution walkthrough",
+    title: "The locked-down Knight",
+    code: `class Knight:
+    def __init__(self, name, max_hp):
+        self.name = name
+        self._max_hp = max_hp
+        self._hp = max_hp
+
+    @property
+    def hp(self):
+        return self._hp
+
+    def take_damage(self, amount):
+        if amount > 0:
+            self._hp = max(0, self._hp - amount)
+
+    def heal(self, amount):
+        if amount > 0:
+            self._hp = min(self._max_hp, self._hp + amount)`,
+    callouts: [
+      { lines: [4, 5], title: "Private storage", text: "_hp and _max_hp hold the real values. The underscore says: hands off, use the methods." },
+      { lines: [7, 9], title: "A read-only window", text: "@property lets anyone READ knight.hp. With no setter, knight.hp = 9999 raises AttributeError." },
+      { lines: [11, 13], title: "take_damage() guards the door", text: "Negative damage is ignored (no sneaky heals), and max(0, ...) stops HP going below zero." },
+      { lines: [15, 17], title: "heal() caps at max", text: "min(self._max_hp, ...) means healing can never overfill." },
+    ],
   },
 
   // ------------------------------------------------------------ ABSTRACTION
@@ -161,7 +209,7 @@ k.hp = 9999`,
     type: "slide",
     layout: "split",
     pillar: "abstraction",
-    minutes: 2,
+    minutes: 1.5,
     kicker: "Abstraction",
     title: "A contract, not a fighter",
     code: `from abc import ABC, abstractmethod
@@ -224,6 +272,32 @@ class Fighter(ABC):
     seconds: 150,
   },
   {
+    id: "abs-solution",
+    type: "slide",
+    layout: "walkthrough",
+    pillar: "abstraction",
+    minutes: 1,
+    kicker: "Solution walkthrough",
+    title: "Signing the contract",
+    code: `from arena import Fighter
+
+# Fighter()  ->  TypeError: it's abstract
+
+class TrainingDummy(Fighter):
+    SPRITE = "slime"
+
+    def choose_move(self, enemy):
+        return self.guard()
+
+dummy = TrainingDummy()   # works now!`,
+    callouts: [
+      { lines: [3, 3], title: "Fighter is a contract", text: "It has an abstract choose_move, so Python refuses to build Fighter() directly." },
+      { lines: [5, 6], title: "Sign the contract", text: "class TrainingDummy(Fighter) inherits HP, potions and every move. Only the decision is missing." },
+      { lines: [8, 9], title: "Keep the promise", text: "Implement choose_move(self, enemy): accept the enemy and RETURN a move like self.guard()." },
+      { lines: [11, 11], title: "Now it can be built", text: "No abstract methods left, so TrainingDummy() works and the arena can use it." },
+    ],
+  },
+  {
     id: "lb-1",
     type: "leaderboard",
     title: "Halfway check-in",
@@ -246,7 +320,7 @@ class Fighter(ABC):
     type: "slide",
     layout: "split",
     pillar: "inheritance",
-    minutes: 2,
+    minutes: 1.5,
     kicker: "Inheritance",
     title: "Your fighter IS-A Fighter",
     code: `class Mage(Fighter):
@@ -271,7 +345,7 @@ class Fighter(ABC):
     type: "slide",
     layout: "bullets",
     pillar: "inheritance",
-    minutes: 1.5,
+    minutes: 1,
     kicker: "Arena rules",
     title: "Moves you inherit",
     bullets: [
@@ -335,7 +409,7 @@ print(Tank("Rocky").hp)`,
     type: "code",
     pillar: "inheritance",
     taskId: "inheritance",
-    minutes: 5,
+    minutes: 4.5,
     title: "Build YOUR fighter",
     goal: "Call super().__init__() with your stats and give choose_move a strategy that uses at least two different moves. This is the fighter that enters the tournament!",
     hints: [
@@ -343,6 +417,38 @@ print(Tank("Rocky").hp)`,
       "if self.hp_percent < 30 and self.potions > 0:\n    return self.heal()\nreturn self.strike()",
     ],
     seconds: 300,
+  },
+  {
+    id: "inh-solution",
+    type: "slide",
+    layout: "walkthrough",
+    pillar: "inheritance",
+    minutes: 1.5,
+    kicker: "Example walkthrough",
+    title: "One fighter that works",
+    code: `from arena import Fighter
+
+class Pyromancer(Fighter):
+    SPRITE = "mage"
+
+    def __init__(self):
+        # budget: 90//10 + 16 + 5 + 10 = 40
+        super().__init__(name="Ember", hp=90,
+                         power=16, defense=5, speed=10)
+
+    def choose_move(self, enemy):
+        if self.hp_percent < 35 and self.potions > 0:
+            return self.heal()
+        if enemy.guarding or enemy.defense >= 8:
+            return self.heavy_strike()
+        return self.strike()`,
+    callouts: [
+      { lines: [3, 3], title: "Pyromancer IS-A Fighter", text: "Inheriting gives Ember HP, potions and every move without writing them." },
+      { lines: [6, 9], title: "super().__init__() sets the stats", text: "Runs the parent's setup. Budget: 9 + 16 + 5 + 10 = 40. Skip it and _hp never exists." },
+      { lines: [12, 13], title: "Heal when low", text: "Below 35% with potions left, call self.heal(), an inherited move." },
+      { lines: [14, 15], title: "Read the enemy", text: "Heavy strike against a guarding or high-defense enemy, where double damage matters most." },
+      { lines: [16, 16], title: "Default: strike", text: "Reliable damage otherwise. Three different moves, so the strategy check passes." },
+    ],
   },
   {
     id: "lb-2",
@@ -367,7 +473,7 @@ print(Tank("Rocky").hp)`,
     type: "slide",
     layout: "split",
     pillar: "polymorphism",
-    minutes: 2,
+    minutes: 1.5,
     kicker: "Polymorphism",
     title: "Same call, different behavior",
     code: `fighters = [IronTank(), StormMage(), YourFighter()]
@@ -443,6 +549,30 @@ arena_turn(Duck())`,
     seconds: 180,
   },
   {
+    id: "poly-solution",
+    type: "slide",
+    layout: "walkthrough",
+    pillar: "polymorphism",
+    minutes: 1.5,
+    kicker: "Solution walkthrough",
+    title: "One call, many fighters",
+    code: `class Pyromancer(Fighter):
+    ...   # stats + choose_move from before
+
+    def battle_cry(self):
+        return "Everything burns eventually!"
+
+# What the arena does, for every fighter:
+for f in fighters:
+    print(f.battle_cry())        # same call...
+    move = f.choose_move(enemy)  # ...different answers`,
+    callouts: [
+      { lines: [4, 5], title: "Override battle_cry()", text: "Fighter has a default; your version replaces it. RETURN a short string (don't print it)." },
+      { lines: [8, 9], title: "The arena never checks your type", text: "It just calls f.battle_cry(). Python finds YOUR method at runtime." },
+      { lines: [10, 10], title: "Same for choose_move()", text: "One call, a whole class of different strategies. That's polymorphism, and it's the entire tournament." },
+    ],
+  },
+  {
     id: "tourney-rules",
     type: "slide",
     layout: "bullets",
@@ -459,7 +589,7 @@ arena_turn(Duck())`,
   {
     id: "tournament",
     type: "tournament",
-    minutes: 7,
+    minutes: 5.5,
   },
   {
     id: "exit-1",
