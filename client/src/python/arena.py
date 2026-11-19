@@ -192,12 +192,17 @@ class IronTank(Fighter):
 
     def __init__(self):
         super().__init__(name="Iron Tank", hp=150, power=8, defense=12, speed=5)
+        self._just_guarded = False
 
     def choose_move(self, enemy):
         if self.hp_percent < 35 and self.potions > 0:
             return self.heal()
-        if enemy.last_move == "heavy":
+        # Guard against a heavy hitter, but never twice in a row: a guard
+        # charges the next attack, so cash it in (and avoid stalling forever).
+        if enemy.last_move == "heavy" and not self._just_guarded:
+            self._just_guarded = True
             return self.guard()
+        self._just_guarded = False
         return self.strike()
 
     def battle_cry(self):

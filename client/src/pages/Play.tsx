@@ -53,6 +53,7 @@ function Center({ children }: { children: React.ReactNode }) {
 // ------------------------------------------------------------ join
 function JoinForm({ onJoin }: { onJoin: (name: string) => Promise<string | null> }) {
   const [name, setName] = useState(randomName);
+  const [edited, setEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pyStatus = usePyStatus();
@@ -76,8 +77,36 @@ function JoinForm({ onJoin }: { onJoin: (name: string) => Promise<string | null>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <input className="join-input" value={name} maxLength={18} onChange={(e) => setName(e.target.value)} aria-label="Nickname" />
-          <button type="button" className="btn" title="Random name" onClick={() => setName(randomName())}>
+          <input
+            className="join-input"
+            value={name}
+            maxLength={18}
+            aria-label="Nickname"
+            onChange={(e) => {
+              setEdited(true);
+              setName(e.target.value);
+            }}
+            // While the random suggestion is untouched, keep it selected so typing replaces it
+            // (otherwise "Iron Unicorn" + typing "Sam" becomes "Iron UnicornSam").
+            onPointerDown={(e) => {
+              if (edited) return;
+              e.preventDefault();
+              e.currentTarget.focus();
+              e.currentTarget.select();
+            }}
+            onFocus={(e) => {
+              if (!edited) e.currentTarget.select();
+            }}
+          />
+          <button
+            type="button"
+            className="btn"
+            title="Random name"
+            onClick={() => {
+              setEdited(false);
+              setName(randomName());
+            }}
+          >
             🎲
           </button>
         </div>

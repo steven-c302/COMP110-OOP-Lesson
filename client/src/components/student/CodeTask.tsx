@@ -10,7 +10,9 @@ import { describeFighter, practice, runTask, usePyStatus, type TaskRun } from ".
 import { Sprite } from "../Sprite.tsx";
 import { renderInlineCode } from "../screen/ScreenBasics.tsx";
 
-const saveKey = (taskId: string) => `oop-arena-code-${taskId}`;
+// Keyed by player too, so a new player in the same browser (rehearsal, shared lab machine,
+// host Reset) never inherits someone else's finished code.
+const saveKey = (playerId: string, taskId: string) => `oop-arena-code-${playerId}-${taskId}`;
 
 function loadLocal(key: string): string | null {
   try {
@@ -29,10 +31,10 @@ function saveLocal(key: string, value: string) {
 }
 
 function initialCode(step: CodeStep, view: StudentView): string {
-  const own = loadLocal(saveKey(step.taskId)) ?? view.carryCode[step.taskId];
+  const own = loadLocal(saveKey(view.me.id, step.taskId)) ?? view.carryCode[step.taskId];
   if (own) return own;
   if (step.carryFrom) {
-    const carried = loadLocal(saveKey(step.carryFrom)) ?? view.carryCode[step.carryFrom];
+    const carried = loadLocal(saveKey(view.me.id, step.carryFrom)) ?? view.carryCode[step.carryFrom];
     if (carried) return carried;
   }
   return TASKS[step.taskId].starter;
@@ -57,6 +59,7 @@ export function CodeTask({ step, view, emit }: Props) {
   const [openedAt] = useState(() => Date.now());
   const [nowTick, setNowTick] = useState(Date.now());
   const pyStatus = usePyStatus();
+  const playerId = view.me.id;
   const codeRef = useRef(code);
   codeRef.current = code;
 
@@ -67,10 +70,10 @@ export function CodeTask({ step, view, emit }: Props) {
 
   // autosave locally + to server (so a reload or another laptop can resume)
   useEffect(() => {
-    saveLocal(saveKey(step.taskId), code);
+    saveLocal(saveKey(playerId, step.taskId), code);
     const t = setTimeout(() => emit("saveCode", { taskId: step.taskId, code }), 1500);
     return () => clearTimeout(t);
-  }, [code, step.taskId, emit]);
+  }, [code, step.taskId, playerId, emit]);
 
   const items = useMemo(() => checklist(task.tests), [task.tests]);
   const allPassed = !!run && !run.error && run.tests.length > 0 && run.tests.every((t) => t.passed);
